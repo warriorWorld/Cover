@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.Button
 import android.widget.SeekBar
@@ -22,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sb_height: SeekBar
     private lateinit var bt_open_authority: Button
     private lateinit var bt_close: Button
+    private val mH = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +43,7 @@ class MainActivity : AppCompatActivity() {
 
         sb_width.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, p2: Boolean) {
-                IntentSkip.startFloatService(this@MainActivity, width = progress, height = -1)
-                cacheWidth = progress
+                updateWidth(progress)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -56,8 +58,7 @@ class MainActivity : AppCompatActivity() {
         sb_height.progress = FloatingService.DEFAULT_HEIGHT
         sb_height.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, p2: Boolean) {
-                IntentSkip.startFloatService(this@MainActivity, width = -1, height = progress)
-                cacheHeight = progress
+                updateHeight(progress)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {
@@ -67,15 +68,31 @@ class MainActivity : AppCompatActivity() {
                 Caches.height = cacheHeight
             }
         })
-        if (Caches.width > 0) {
-            sb_width.progress = Caches.width
-        }
-        if (Caches.height > 0) {
-            sb_height.progress = Caches.height
-        }
+
+        mH.postDelayed(Runnable {
+            if (Caches.width > 0) {
+                sb_width.progress = Caches.width
+              updateWidth(Caches.width)
+            }
+            if (Caches.height > 0) {
+                sb_height.progress = Caches.height
+                updateHeight(Caches.height)
+            }
+        }, 500)
+
         bt_close.setOnClickListener {
             IntentSkip.startFloatService(this@MainActivity, startOrHide = false)
         }
+    }
+
+    private fun updateWidth(progress: Int) {
+        IntentSkip.startFloatService(this@MainActivity, width = progress, height = -1)
+        cacheWidth = progress
+    }
+
+    private fun updateHeight(progress: Int) {
+        IntentSkip.startFloatService(this@MainActivity, width = -1, height = progress)
+        cacheHeight = progress
     }
 
     //开启悬浮窗的service
