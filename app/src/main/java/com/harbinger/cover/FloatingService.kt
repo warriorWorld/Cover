@@ -6,7 +6,10 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -30,6 +33,7 @@ class FloatingService : Service() {
     private lateinit var layoutParams: WindowManager.LayoutParams
 
     var rootView: View? = null
+    private val mH = Handler(Looper.getMainLooper())
 
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -51,12 +55,12 @@ class FloatingService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         layoutParams.width = DEFAULT_WIDTH
         layoutParams.height = DEFAULT_HEIGHT
-        layoutParams.x = (AndroidUtils.getScreeenWidth(this) - layoutParams.width)/2
+        layoutParams.x = (AndroidUtils.getScreeenWidth(this) - layoutParams.width) / 2
         layoutParams.y = (DEFAULT_Y_PROPORTION * AndroidUtils.getScreeenHeight(this)).toInt()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val startHide = intent?.getBooleanExtra(INTENT_START_HIDE, true)?:true
+        val startHide = intent?.getBooleanExtra(INTENT_START_HIDE, true) ?: true
         if (startHide) {
             if (isStarted) {
                 val width = intent?.getIntExtra(INTENT_WIDTH, DEFAULT_WIDTH) ?: DEFAULT_WIDTH
@@ -85,9 +89,18 @@ class FloatingService : Service() {
     private fun showFloatingWindow() {
         isStarted = true
         rootView = View(this)
-        rootView?.setBackgroundColor(Color.BLUE)
-        windowManager.addView(rootView, layoutParams)
+        rootView?.setBackgroundColor(resources.getColor(R.color.cover))
 
+        windowManager.addView(rootView, layoutParams)
+        mH.postDelayed(Runnable {
+            if (Caches.x > 0) {
+                layoutParams.x = Caches.x
+            }
+            if (Caches.y > 0) {
+                layoutParams.y = Caches.y
+            }
+            windowManager.updateViewLayout(rootView, layoutParams)
+        },500)
         rootView?.setOnTouchListener(FloatingOnTouchListener())
     }
 
@@ -116,7 +129,12 @@ class FloatingService : Service() {
                     y = nowY
                     layoutParams.x = layoutParams.x + movedX
                     layoutParams.y = layoutParams.y + movedY
+                    Log.d("FLOAT", "position:${layoutParams.x},${layoutParams.y}")
                     windowManager.updateViewLayout(view, layoutParams)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    Caches.x = layoutParams.x
+                    Caches.y = layoutParams.y
                 }
                 else -> {
                 }
@@ -124,7 +142,6 @@ class FloatingService : Service() {
             return true
         }
     }
-
 
 
 }
