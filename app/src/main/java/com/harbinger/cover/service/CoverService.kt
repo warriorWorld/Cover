@@ -47,11 +47,9 @@ public class CoverService : Service() {
         val layout: View = LayoutInflater.from(this).inflate(R.layout.cover_view, null)
         val coverView = CoverView(this, layout, object : OnCoverViewClickListener {
             override fun onCoverClick() {
-                TODO("Not yet implemented")
             }
 
             override fun onCoverLongClick() {
-                TODO("Not yet implemented")
             }
         })
     }
