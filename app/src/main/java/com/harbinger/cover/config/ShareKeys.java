@@ -6,4 +6,5 @@ package com.harbinger.cover.config;
 
 public class ShareKeys {
     public static final String LAST_DRAGVIEW_POSITION = "last_dragview_position";
+    public static final String LAST_DRAGVIEW_BOTTOM = "last_dragview_bottom";
 }

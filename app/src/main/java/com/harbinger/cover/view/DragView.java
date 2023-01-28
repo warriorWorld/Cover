@@ -31,6 +31,7 @@ public class DragView extends ImageView {
     private float xDistance, yDistance;
     private boolean savePosition = false;
     private OnClickListener mOnClickListener;
+    private boolean draging = false;
 
     public DragView(Context context) {
         super(context);
@@ -73,7 +74,7 @@ public class DragView extends ImageView {
             lastRight = right;
             lastBottom = bottom;
         }
-//        Logger.d(TAG+":"+changed+","+left+","+top+","+right+","+bottom);
+        Log.d(TAG,":"+changed+","+left+","+top+","+right+","+bottom);
     }
 
     @Override
@@ -145,6 +146,10 @@ public class DragView extends ImageView {
         }
     }
 
+    public void toOriginalPosition() {
+        this.layout(0, 0, 0, 0);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 //        Logger.d(TAG+":onTouchEvent");
@@ -161,6 +166,7 @@ public class DragView extends ImageView {
                     yDistance = 0;
                     break;
                 case MotionEvent.ACTION_MOVE:
+                    draging = true;
                     xDistance = event.getX() - downX;
                     yDistance = event.getY() - downY;
                     Log.d(TAG, "xDistance:" + xDistance + "      yDistance:" + yDistance);
@@ -192,12 +198,16 @@ public class DragView extends ImageView {
                     if (Math.abs(xDistance) <= clickThreshold && Math.abs(yDistance) <= clickThreshold && null != mOnClickListener) {
                         mOnClickListener.onClick(this);
                     }
+                    draging = false;
                     setPressed(false);
                     toEdge();
+                    saveBottom(screenWidth - lastLeft);
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     setPressed(false);
+                    draging = false;
                     toEdge();
+                    saveBottom(screenWidth-lastLeft);
                     break;
             }
             return true;
@@ -205,8 +215,16 @@ public class DragView extends ImageView {
         return false;
     }
 
+    private void saveBottom(int bottom) {
+        SharedPreferencesUtils.setSharedPreferencesData(mContext, ShareKeys.LAST_DRAGVIEW_BOTTOM, bottom);
+    }
+
     public boolean isSavePosition() {
         return savePosition;
+    }
+
+    public boolean isDraging() {
+        return draging;
     }
 
     public void setSavePosition(boolean savePosition) {

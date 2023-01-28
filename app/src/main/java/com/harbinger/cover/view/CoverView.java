@@ -5,6 +5,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -12,7 +13,9 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.harbinger.cover.R;
+import com.harbinger.cover.config.ShareKeys;
 import com.harbinger.cover.utils.CommonUtil;
+import com.harbinger.cover.utils.SharedPreferencesUtils;
 import com.harbinger.cover.utils.VibratorUtil;
 
 
@@ -25,17 +28,18 @@ public class CoverView extends View {
     private WindowManager wm;
     private Point windowSize = new Point();
     private Point originalSize;
-    private View layout, cover;
+    private View layout;
+    private DragView cover;
     private WindowManager.LayoutParams params;
     private Handler mH = new Handler(Looper.getMainLooper());
     private OnCoverViewClickListener onCoverClickListener;
     //    //drag
-//    private float downX;
-//    private float downY;
-//    private int lastMotion, lastLeft, lastRight, lastTop, lastBottom, screenWidth, screenHeight;
-//    private float xDistance, yDistance;
-//    private final int clickThreshold = 1;
-    private boolean dragMode = false;
+    private float downX;
+    private float downY;
+    private int lastMotion, lastLeft, lastRight, lastTop, lastBottom, screenWidth, screenHeight;
+    private float xDistance, yDistance;
+    private final int clickThreshold = 1;
+    private boolean dragMode = true;
 
     public CoverView(Context context, View layout, OnCoverViewClickListener onCoverClickListener) {
         super(context);
@@ -61,15 +65,19 @@ public class CoverView extends View {
         cover.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (null != onCoverClickListener) {
-                    onCoverClickListener.onCoverClick();
-                }
+//                if (null != onCoverClickListener) {
+//                    onCoverClickListener.onCoverClick();
+//                }
+                toggleDragMode();
             }
         });
         cover.setOnLongClickListener(new OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                toggleDragMode();
+//                if (cover.isDraging()&&dragMode){
+//                    return false;
+//                }
+//                toggleDragMode();
                 return true;
             }
         });
@@ -175,8 +183,16 @@ public class CoverView extends View {
             params.width = originalSize.x;
             params.height = originalSize.y;
             wm.updateViewLayout(layout, params);
+            toPosition();
         }
         dragMode = !dragMode;
+    }
+
+    private void toPosition() {
+        int bottom = SharedPreferencesUtils.getIntSharedPreferencesData(context, ShareKeys.LAST_DRAGVIEW_BOTTOM);
+
+        params.y = bottom;
+        wm.updateViewLayout(layout, params);
     }
 
     public void toggleOrientation() {
@@ -194,7 +210,7 @@ public class CoverView extends View {
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
 
-        params.width = originalSize.x;
+        params.width = windowSize.x;
         params.height = originalSize.y;
 //        params.width = windowSize.x;
 //        params.height = windowSize.y;
@@ -205,6 +221,8 @@ public class CoverView extends View {
         wm.addView(layout, params);
 //        isAdded = true;
     }
+
+
 
     public interface OnCoverViewClickListener {
         void onCoverClick();
